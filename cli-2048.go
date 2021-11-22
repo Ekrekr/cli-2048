@@ -29,6 +29,7 @@ type game struct {
 	highScore    int
 	grid         [][]int
 	newGrid      [][]int
+	isGameOver   bool
 }
 
 func main() {
@@ -36,7 +37,7 @@ func main() {
 
 	// args := os.Args[1:]
 
-	var g = game{currentScore: 2048, highScore: 4096, grid: testGrid}
+	var g = game{currentScore: 2048, highScore: 4096, grid: testGrid, isGameOver: false}
 
 	if err := keyboard.Open(); err != nil {
 		panic(err)
@@ -53,6 +54,9 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		if g.isGameOver == true {
+			play = false
+		}
 		if key == keyboard.KeyArrowUp {
 			g.moveUp()
 		}
@@ -68,6 +72,7 @@ func main() {
 		if key == keyboard.KeyCtrlQ || key == keyboard.KeyCtrlC {
 			play = false
 		}
+		g.isGameOver = g.checkGameOver()
 	}
 
 }
@@ -170,6 +175,28 @@ func (g *game) spawnNewTileIfNeeded(side int) {
 	}
 }
 
+func (g *game) checkGameOver() bool {
+	// This could be optimised.
+	for y := 0; y < g.gridHeight(); y++ {
+		for x := 0; x < g.gridWidth(); x++ {
+			// For each tile, check all adjacent tiles.
+			if y > 0 && (g.grid[y][x] == g.grid[y-1][x] || g.grid[y-1][x] == 0) {
+				return false
+			}
+			if y < g.gridHeight()-1 && (g.grid[y][x] == g.grid[y+1][x] || g.grid[y+1][x] == 0) {
+				return false
+			}
+			if x > 0 && (g.grid[y][x] == g.grid[y][x-1] || g.grid[y][x-1] == 0) {
+				return false
+			}
+			if x < g.gridWidth()-1 && (g.grid[y][x] == g.grid[y][x+1] || g.grid[y][x+1] == 0) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func (g *game) gridHeight() int {
 	return len(g.grid)
 }
@@ -201,6 +228,10 @@ func (g *game) print() {
 	}
 
 	fmt.Printf("\n     ←,↑,→,↓ or ctrl-q   \n\n")
+
+	if g.isGameOver {
+		fmt.Println("     >>> GAME OVER! <<<    ")
+	}
 }
 
 func getTilePrinter(tile int) func(format string, a ...interface{}) (n int, err error) {
