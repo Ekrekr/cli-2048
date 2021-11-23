@@ -21,12 +21,6 @@ const (
 	LEFT   = 4
 )
 
-var testGrid = [][]int{
-	{0, 4, 2, 0},
-	{2, 0, 0, 0},
-	{0, 128, 64, 0},
-	{0, 128, 2048, 32768}}
-
 type game struct {
 	currentScore      int
 	highScore         int
@@ -40,11 +34,12 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	var g = game{
-		currentScore:      2048,
-		highScore:         84096,
-		grid:              testGrid,
+		currentScore:      0,
+		highScore:         0,
+		grid:              [][]int{},
 		isGameOver:        false,
 		needScreenRefresh: true}
+	g.newGame()
 
 	if err := keyboard.Open(); err != nil {
 		panic(err)
@@ -64,9 +59,6 @@ func main() {
 		if err != nil {
 			// TODO: Shift arrow keys will panic here. Ignore, or not?
 			// panic(err)
-		}
-		if g.isGameOver == true {
-			play = false
 		}
 		switch key {
 		case keyboard.KeyArrowUp:
@@ -92,8 +84,10 @@ func main() {
 		case keyboard.KeyCtrlN:
 			g.newGame()
 			g.needScreenRefresh = true
+			g.isGameOver = false
 		case keyboard.KeyCtrlQ:
 		case keyboard.KeyCtrlC:
+			// TODO: Save game.
 			play = false
 		}
 		g.isGameOver = g.checkIsGameOver()
@@ -168,6 +162,10 @@ func (g *game) move(direction int) {
 func (g *game) combineTilesIfEqual(yTo int, xTo int, yFrom int, xFrom int) {
 	if g.grid[yTo][xTo] == g.grid[yFrom][xFrom] {
 		g.grid[yTo][xTo] *= 2
+		g.currentScore += g.grid[yTo][xTo]
+		if g.currentScore > g.highScore {
+			g.highScore = g.currentScore
+		}
 		g.grid[yFrom][xFrom] = 0
 	}
 }
