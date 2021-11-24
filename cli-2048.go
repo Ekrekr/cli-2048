@@ -21,11 +21,16 @@ const (
 	LEFT   = 4
 )
 
+type coord struct {
+	y int
+	x int
+}
+
 type game struct {
 	currentScore      int
 	highScore         int
 	grid              [][]int
-	newGrid           [][]int
+	vectorsWithMerged []bool
 	isGameOver        bool
 	needScreenRefresh bool
 }
@@ -125,96 +130,124 @@ func (g *game) checkIsGameOver() bool {
 func (g *game) move(direction int) {
 	switch direction {
 	case DOWN:
-		for y := g.gridHeight() - 1; y > 0; y-- {
+		for y := g.gridHeight() - 1; y >= 0; y-- {
 			for x := 0; x < g.gridWidth(); x++ {
-				g.combineTilesIfEqual(y, x, y-1, x)
-				g.moveTileIfSpaceEmpty(y, x, y-1, x)
+				g.moveTileIfAble(y, x, DOWN)
 			}
 		}
-		g.spawnNewTileIfNeeded(TOP)
 	case UP:
-		for y := 0; y < g.gridHeight()-1; y++ {
+		for y := 0; y < g.gridHeight(); y++ {
 			for x := 0; x < g.gridWidth(); x++ {
-				g.combineTilesIfEqual(y, x, y+1, x)
-				g.moveTileIfSpaceEmpty(y, x, y+1, x)
+				g.moveTileIfAble(y, x, UP)
 			}
 		}
-		g.spawnNewTileIfNeeded(BOTTOM)
 	case RIGHT:
-		for y := 0; y < g.gridHeight(); y++ {
-			for x := g.gridWidth() - 1; x > 0; x-- {
-				g.combineTilesIfEqual(y, x, y, x-1)
-				g.moveTileIfSpaceEmpty(y, x, y, x-1)
+		for x := g.gridWidth() - 1; x >= 0; x-- {
+			for y := 0; y < g.gridHeight(); y++ {
+				g.moveTileIfAble(y, x, RIGHT)
 			}
 		}
-		g.spawnNewTileIfNeeded(LEFT)
 	case LEFT:
-		for y := 0; y < g.gridHeight(); y++ {
-			for x := 0; x < g.gridWidth()-1; x++ {
-				g.combineTilesIfEqual(y, x, y, x+1)
-				g.moveTileIfSpaceEmpty(y, x, y, x+1)
+		for x := 0; x < g.gridWidth(); x++ {
+			for y := 0; y < g.gridHeight(); y++ {
+				g.moveTileIfAble(y, x, LEFT)
 			}
 		}
-		g.spawnNewTileIfNeeded(RIGHT)
+	}
+	g.spawnNewTile()
+}
+
+func (g *game) moveTileIfAble(yFrom int, xFrom int, direction int) {
+	if g.grid[yFrom][xFrom] == 0 {
+		return
+	}
+	var yTo = yFrom
+	var xTo = xFrom
+	var merge = false
+out:
+	switch direction {
+	case DOWN:
+		for y := yFrom + 1; y < g.gridHeight(); y++ {
+			yTo = y
+			if g.grid[yTo][xTo] != 0 {
+				if g.grid[yFrom][xFrom] == g.grid[yTo][xTo] {
+					merge = true
+				} else {
+					yTo = y - 1
+				}
+				break out
+			}
+		}
+	case UP:
+		for y := yFrom - 1; y >= 0; y-- {
+			yTo = y
+			if g.grid[yTo][xTo] != 0 {
+				if g.grid[yFrom][xFrom] == g.grid[yTo][xTo] {
+					merge = true
+				} else {
+					yTo = y + 1
+				}
+				break out
+			}
+		}
+	case LEFT:
+		for x := xFrom - 1; x >= 0; x-- {
+			xTo = x
+			if g.grid[yTo][xTo] != 0 {
+				if g.grid[yFrom][xFrom] == g.grid[yTo][xTo] {
+					merge = true
+				} else {
+					xTo = x + 1
+				}
+				break out
+			}
+		}
+	case RIGHT:
+		for x := xFrom + 1; x < g.gridWidth(); x++ {
+			xTo = x
+			if g.grid[yTo][xTo] != 0 {
+				if g.grid[yFrom][xFrom] == g.grid[yTo][xTo] {
+					merge = true
+				} else {
+					xTo = x - 1
+				}
+				break out
+			}
+		}
+	}
+
+	if yTo != yFrom || xTo != xFrom {
+		if merge {
+			g.grid[yTo][xTo] = g.grid[yFrom][xFrom] * 2
+			g.grid[yFrom][xFrom] = 0
+			g.currentScore += g.grid[yTo][xTo]
+			if g.currentScore > g.highScore {
+				g.highScore = g.currentScore
+			}
+		} else {
+			g.grid[yTo][xTo] = g.grid[yFrom][xFrom]
+			g.grid[yFrom][xFrom] = 0
+		}
 	}
 }
 
-func (g *game) combineTilesIfEqual(yTo int, xTo int, yFrom int, xFrom int) {
-	if g.grid[yTo][xTo] == g.grid[yFrom][xFrom] {
-		g.grid[yTo][xTo] *= 2
-		g.currentScore += g.grid[yTo][xTo]
-		if g.currentScore > g.highScore {
-			g.highScore = g.currentScore
-		}
-		g.grid[yFrom][xFrom] = 0
-	}
-}
+func (g *game) spawnNewTile() {
+	var emptyCoords = []coord{}
 
-func (g *game) moveTileIfSpaceEmpty(yTo int, xTo int, yFrom int, xFrom int) {
-	if g.grid[yTo][xTo] == 0 {
-		g.grid[yTo][xTo] = g.grid[yFrom][xFrom]
-		g.grid[yFrom][xFrom] = 0
-	}
-}
-
-func (g *game) spawnNewTileIfNeeded(side int) {
-	var emptySpaces []int
-	var spawnIndexLimit = g.gridWidth()
-	if side == LEFT || side == RIGHT {
-		spawnIndexLimit = g.gridHeight()
-	}
-	for i := 0; i < spawnIndexLimit; i++ {
-		if side == TOP && g.grid[0][i] == 0 {
-			emptySpaces = append(emptySpaces, i)
-		}
-		if side == BOTTOM && g.grid[g.gridHeight()-1][i] == 0 {
-			emptySpaces = append(emptySpaces, i)
-		}
-		if side == LEFT && g.grid[i][0] == 0 {
-			emptySpaces = append(emptySpaces, i)
-		}
-		if side == RIGHT && g.grid[i][g.gridWidth()-1] == 0 {
-			emptySpaces = append(emptySpaces, i)
+	for y := 0; y < g.gridHeight(); y++ {
+		for x := 0; x < g.gridWidth(); x++ {
+			if g.grid[y][x] == 0 {
+				emptyCoords = append(emptyCoords, coord{y, x})
+			}
 		}
 	}
 
-	if len(emptySpaces) > 0 {
-		var newTileValue = 2
+	if len(emptyCoords) > 0 {
+		var randomCoord = emptyCoords[int32(rand.Float64()*float64(len(emptyCoords)))]
 		if rand.Float64() > 0.9 {
-			newTileValue = 4
-		}
-
-		var randomIndex = int32(rand.Float64() * float64(len(emptySpaces)))
-		var newTilePlace = emptySpaces[randomIndex]
-		switch side {
-		case TOP:
-			g.grid[0][newTilePlace] = newTileValue
-		case BOTTOM:
-			g.grid[g.gridHeight()-1][newTilePlace] = newTileValue
-		case LEFT:
-			g.grid[newTilePlace][0] = newTileValue
-		case RIGHT:
-			g.grid[newTilePlace][g.gridWidth()-1] = newTileValue
+			g.grid[randomCoord.y][randomCoord.x] = 4
+		} else {
+			g.grid[randomCoord.y][randomCoord.x] = 2
 		}
 	}
 }
@@ -233,7 +266,7 @@ func (g *game) newGame() {
 		g.grid[i] = make([]int, 4)
 	}
 	// Spawn a tile on a random side.
-	g.move(int(rand.Float64()*4 + 1))
+	g.spawnNewTile()
 	g.currentScore = 0
 }
 
