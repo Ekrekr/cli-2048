@@ -259,10 +259,6 @@ func (g *game) gridWidth() int {
 
 func (g *game) newGame() {
 	g.Grid = [4][4]uint32{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}
-	// g.Grid = make([][]int, 4)
-	// for i := range g.Grid {
-	// 	g.Grid[i] = make([]int, 4)
-	// }
 	g.spawnNewTile()
 	g.spawnNewTile()
 	g.CurrentScore = 0
@@ -270,7 +266,7 @@ func (g *game) newGame() {
 }
 
 func (g *game) getGameDisplay() string {
-	// Printing output all in one go remove appearance lag in the terminal.
+	// Printing output all in one go removes appearance lag in the terminal.
 	var output = ""
 	output += fmt.Sprintf("\n            cli-2048          \n  ")
 	for q := 0; q <= 8-len(strconv.Itoa(int(g.CurrentScore))); q++ {
