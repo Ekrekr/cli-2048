@@ -2,8 +2,9 @@
 
 Play 2048 in your terminal! Featuring high scores, game saving and resumption.
 
-![alt text](https://github.com/ekrekr/cli-2048/blob/main/pic.png?raw=true)
-<!-- TODO: Add gif -->
+<p align="center">
+  <img src="https://github.com/ekrekr/cli-2048/blob/main/gif.gif?raw=true" alt="demo gif" style="max-height:20rem">
+</p>
 
 ## Play ASAP
 
