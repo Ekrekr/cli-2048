@@ -66,21 +66,25 @@ func main() {
 		case keyboard.KeyArrowUp:
 			if g.canMove(UP) {
 				g.move(UP)
+				g.spawnNewTile()
 				g.NeedScreenRefresh = true
 			}
 		case keyboard.KeyArrowDown:
 			if g.canMove(DOWN) {
 				g.move(DOWN)
+				g.spawnNewTile()
 				g.NeedScreenRefresh = true
 			}
 		case keyboard.KeyArrowLeft:
 			if g.canMove(LEFT) {
 				g.move(LEFT)
+				g.spawnNewTile()
 				g.NeedScreenRefresh = true
 			}
 		case keyboard.KeyArrowRight:
 			if g.canMove(RIGHT) {
 				g.move(RIGHT)
+				g.spawnNewTile()
 				g.NeedScreenRefresh = true
 			}
 		case keyboard.KeyCtrlN:
@@ -97,22 +101,13 @@ func main() {
 }
 
 func (g *game) canMove(direction int) bool {
+	// If the game has an identical grid after moving then the tiles
+	// are at their movement limit.
+	gameAfterMove := *g
+	gameAfterMove.move(direction)
 	for y := 0; y < g.gridHeight(); y++ {
 		for x := 0; x < g.gridWidth(); x++ {
-			if direction == UP && y > 0 &&
-				(g.Grid[y][x] == g.Grid[y-1][x] || g.Grid[y-1][x] == 0) {
-				return true
-			}
-			if direction == DOWN && y < g.gridHeight()-1 &&
-				(g.Grid[y][x] == g.Grid[y+1][x] || g.Grid[y+1][x] == 0) {
-				return true
-			}
-			if direction == LEFT && x > 0 &&
-				(g.Grid[y][x] == g.Grid[y][x-1] || g.Grid[y][x-1] == 0) {
-				return true
-			}
-			if direction == RIGHT && x < g.gridWidth()-1 &&
-				(g.Grid[y][x] == g.Grid[y][x+1] || g.Grid[y][x+1] == 0) {
+			if gameAfterMove.Grid[y][x] != g.Grid[y][x] {
 				return true
 			}
 		}
@@ -151,7 +146,6 @@ func (g *game) move(direction int) {
 			}
 		}
 	}
-	g.spawnNewTile()
 }
 
 func (g *game) moveTileIfAble(yFrom int, xFrom int, direction int) {
