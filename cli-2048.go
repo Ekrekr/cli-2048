@@ -16,12 +16,10 @@ import (
 )
 
 const (
-	TOP    = 1
-	UP     = 1
-	RIGHT  = 2
-	BOTTOM = 3
-	DOWN   = 3
-	LEFT   = 4
+	UP    = 1
+	RIGHT = 2
+	DOWN  = 3
+	LEFT  = 4
 )
 
 type coord struct {
