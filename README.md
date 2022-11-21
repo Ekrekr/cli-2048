@@ -25,7 +25,7 @@ $ go build cli-2048.go
 
 Then either install the binary
 ```
-$ sudo mv cli-2048 /usr/bin/2048
+$ sudo mv cli-2048 /usr/local/bin/2048
 ```
 
 or set a launch alias (use .bashrc if you don't use zsh)
